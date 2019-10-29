@@ -131,7 +131,7 @@ julia_environment <- function(julia_obj_index = FALSE){
 	julia_library("JLD")
 
 	cat("\nloading core functions from Julia\n")
-	julia_source(system.file("src/CoreFunction.jl", package = "sctransfermap"))
+	julia_source(system.file("./CoreFunction.jl", package = "sctransfermap"))
 	if (julia_obj_index) {
 		cat("\nImporting Julia object\n")
 		julia_file <- system.file("data/julia_file.jld", package = "sctransfermap")
