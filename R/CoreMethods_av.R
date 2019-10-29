@@ -294,11 +294,11 @@ save_sparse_data <- function(input_var, filename){
 #' @param gene_usage option for gene/peak_location filtering to make hadamard matrix (default: FALSE; train parameter must be TRUE)
 #' gene_usage -> FALSE: gene/peak_location filtering by discarding low expressing cell ratio genes/peak_locations
 #'
-#' @return return a list variable composed of 4 objects (d, genename, cellname, celltype)
-#' d: expression or peak matrix (row: gene, col: cell)
-#' genename: gene or peak location
-#' cellname: cell annotation
-#' celltype: celltype == sort(unique(cellname))
+#' @return return a list variable composed of 4 objects (d, genename, cellname, celltype) \cr
+#' d: expression or peak matrix (row: gene, col: cell) \cr
+#' genename: gene or peak location \cr
+#' cellname: cell annotation \cr
+#' celltype: celltype == sort(unique(cellname)) \cr
 #'
 #' @examples 
 #' data1 <- make_input(input_var) [query case]

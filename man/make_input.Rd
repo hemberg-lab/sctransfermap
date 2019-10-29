@@ -24,11 +24,11 @@ train -> FALSE: no gene/peak_location filtering}
 gene_usage -> FALSE: gene/peak_location filtering by discarding low expressing cell ratio genes/peak_locations}
 }
 \value{
-return a list variable composed of 4 objects (d, genename, cellname, celltype)
-d: expression or peak matrix (row: gene, col: cell)
-genename: gene or peak location
-cellname: cell annotation
-celltype: celltype == sort(unique(cellname))
+return a list variable composed of 4 objects (d, genename, cellname, celltype) \cr
+d: expression or peak matrix (row: gene, col: cell) \cr
+genename: gene or peak location \cr
+cellname: cell annotation \cr
+celltype: celltype == sort(unique(cellname)) \cr
 }
 \description{
 make input format for sctransfer map from matrix file
