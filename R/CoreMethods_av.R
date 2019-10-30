@@ -131,10 +131,10 @@ julia_environment <- function(julia_obj_index = FALSE){
 	julia_library("JLD")
 
 	cat("\nloading core functions from Julia\n")
-	julia_source(system.file("./CoreFunction.jl", package = "sctransfermap"))
+	julia_source(system.file("CoreFunction.jl", package = "sctransfermap"))
 	if (julia_obj_index) {
 		cat("\nImporting Julia object\n")
-		julia_file <- system.file("data/julia_file.jld", package = "sctransfermap")
+		julia_file <- system.file("julia_file.jld", package = "sctransfermap")
 		julia_obj <- julia_call("load", julia_file, need_return = "R")
 		return (julia_obj)
 	}	
@@ -218,6 +218,30 @@ quick_training <- function(input_var, name, tissue){
 	return (train_att)
 
 
+}
+
+#' Title
+#'
+#' generating side information of word2vec
+#'
+#' @param w2v_obj the result of make_w2v
+#' @param cell_ontology_obj te result of make_cellontology
+#' @param stopword the result of make_stopwords
+#'
+#' @return side information of cell_ontology in julia object
+#'
+#' @examples
+#'
+#' @export
+make_w2v_sideinfo <- function(w2v_obj, cell_ontology_obj, stopword, R_output = FALSE){
+	cat("\nGenerating side information or word2vec. Use side information object with w2v_index = FALSE during create_signature or create_attribute\n")
+	if (R_output) {
+		s <- julia_call("make_sideinfo", w2v, cell_ontology_obj, stopword, need_return = "R")
+	}
+	else {
+		s <- julia_call("make_sideinfo", w2v, cell_ontology_obj, stopword, need_return = "Julia")
+	}
+	return (s)
 }
 
 
