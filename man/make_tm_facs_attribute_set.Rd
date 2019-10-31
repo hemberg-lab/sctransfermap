@@ -5,7 +5,7 @@
 \title{Title}
 \usage{
 make_tm_facs_attribute_set(tm_facs_input, s, annot, mincell, ngene = 64,
-  fdrthr = 0.1)
+  fdrthr = 0.1, lambda = 1, gamma = 1)
 }
 \arguments{
 \item{tm_facs_input}{the result of make_input_tm_facs}

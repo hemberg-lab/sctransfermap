@@ -134,7 +134,7 @@ make_tm_facs_signature_set <- function(tm_facs_input, s, annot){
 #' @examples
 #'
 #' @export
-make_tm_facs_attribute_set <- function(tm_facs_input, s, annot, mincell, ngene = 64, fdrthr = 0.1){
+make_tm_facs_attribute_set <- function(tm_facs_input, s, annot, mincell, ngene = 64, fdrthr = 0.1, lambda = 1, gamma = 1){
 	start_time <- Sys.time()
 	head = TRUE
 	for (i in 1:length(tm_facs_input)){
@@ -149,10 +149,10 @@ make_tm_facs_attribute_set <- function(tm_facs_input, s, annot, mincell, ngene =
 		d <- tm_facs_input[[i]]
 		
 		if (mincell){
-			d_att <- create_attribute("Tabula_Muris_Facs", tissue_name, s, d[[1]], d[[2]], d[[3]], annot, "cellontology", Stopwords = JuliaObject(""), Ngene = ngene, Fdrthr = fdrthr)		
+			d_att <- create_attribute("Tabula_Muris_Facs", tissue_name, s, d[[1]], d[[2]], d[[3]], annot, "cellontology", Stopwords = JuliaObject(""), Ngene = ngene, Fdrthr = fdrthr,Gamma = gamma, Lambda = lambda)		
 		}
 		else {
-			d_att <- create_attribute("Tabula_Muris_Facs", tissue_name, s, d[[1]], d[[2]], d[[3]], annot, "cellontology", Stopwords = JuliaObject(""), Mincellcount = 0, Mincellfrac = 0, Ngene = ngene, Fdrthr = fdrthr)	
+			d_att <- create_attribute("Tabula_Muris_Facs", tissue_name, s, d[[1]], d[[2]], d[[3]], annot, "cellontology", Stopwords = JuliaObject(""), Mincellcount = 0, Mincellfrac = 0, Ngene = ngene, Fdrthr = fdrthr,Gamma = gamma, Lambda = lambda)	
 		}
 		if (head){
 			tm_facs_att_set <- make_attribute_set(d_att)
