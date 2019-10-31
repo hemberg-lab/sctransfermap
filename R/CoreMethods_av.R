@@ -227,19 +227,21 @@ quick_training <- function(input_var, name, tissue){
 #' @param w2v_obj the result of make_w2v
 #' @param cell_ontology_obj te result of make_cellontology
 #' @param stopword the result of make_stopwords
-#'
+#' @param opt TRUE if mean value for word2vector, FALSE if max value for word2vector
 #' @return side information of cell_ontology in julia object
 #'
 #' @examples
 #'
 #' @export
-make_w2v_sideinfo <- function(w2v_obj, cell_ontology_obj, stopword, R_output = FALSE){
+make_w2v_sideinfo <- function(w2v_obj, cell_ontology_obj, stopword, opt = TRUE,  R_output = FALSE){
 	cat("\nGenerating side information or word2vec. Use side information object with w2v_index = FALSE during create_signature or create_attribute\n")
+
+	opt <- JuliaObject(opt)
 	if (R_output) {
-		s <- julia_call("make_sideinfo", w2v, cell_ontology_obj, stopword, need_return = "R")
+		s <- julia_call("make_sideinfo", w2v, cell_ontology_obj, stopword, opt, need_return = "R")
 	}
 	else {
-		s <- julia_call("make_sideinfo", w2v, cell_ontology_obj, stopword, need_return = "Julia")
+		s <- julia_call("make_sideinfo", w2v, cell_ontology_obj, stopword, opt, need_return = "Julia")
 	}
 	return (s)
 }

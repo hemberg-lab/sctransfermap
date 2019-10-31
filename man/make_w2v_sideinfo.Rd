@@ -4,7 +4,8 @@
 \alias{make_w2v_sideinfo}
 \title{Title}
 \usage{
-make_w2v_sideinfo(w2v_obj, cell_ontology_obj, stopword, R_output = FALSE)
+make_w2v_sideinfo(w2v_obj, cell_ontology_obj, stopword, opt = TRUE,
+  R_output = FALSE)
 }
 \arguments{
 \item{w2v_obj}{the result of make_w2v}
@@ -12,6 +13,8 @@ make_w2v_sideinfo(w2v_obj, cell_ontology_obj, stopword, R_output = FALSE)
 \item{cell_ontology_obj}{te result of make_cellontology}
 
 \item{stopword}{the result of make_stopwords}
+
+\item{opt}{TRUE if mean value for word2vector, FALSE if max value for word2vector}
 }
 \value{
 side information of cell_ontology in julia object
