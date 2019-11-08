@@ -2,19 +2,21 @@
 % Please edit documentation in R/test_code.R
 \name{import_tm_facs}
 \alias{import_tm_facs}
-\title{Title}
+\title{import_tm_facs}
 \usage{
 import_tm_facs(address)
 }
 \arguments{
-\item{address}{scdata address list}
+\item{address}{scdata address list (format: "raw")\cr
+- filename: tissue_1_cnt, tissue_2_cnt ...}
 }
 \value{
-
+list of matrix (names: each tissue or filename)
 }
 \description{
-"importdata" for TM
+"importdata" for TM (or multiple "raw" matrix files)
 }
 \examples{
+tm_facs <- import_tm_facs("address_file")
 
 }

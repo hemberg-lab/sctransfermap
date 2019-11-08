@@ -1,13 +1,14 @@
 Package: sctransfermap
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
+Title: sctransfermap for predicting cell type in single-cell data (RNA-seq and ATAC-seq)
+Version: 1.0.0.0000
 Authors@R: 
     person(given = "First",
            family = "Last",
            role = c("aut", "cre"),
            email = "first.last@example.com",
            comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
+Description: sctransfermap trains side information (scRNA-seq, scATAC-seq, or cell ontology) and single-cell data (scRNA-seq and scATAC-seq) with zero-shot learing. sctransfermap could easily merge additional data with pre-existing trained model. By trained model, sctransfermap could predict cell type from query scRNA-seq or scATAC-seq. In addition, sctransfermap could predict the origin of tissue by logistic regression.
+Depends: R (>= 3.5.0)
 License: What license it uses
 Encoding: UTF-8
 LazyData: true

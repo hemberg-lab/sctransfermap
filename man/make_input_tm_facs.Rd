@@ -2,20 +2,36 @@
 % Please edit documentation in R/test_code.R
 \name{make_input_tm_facs}
 \alias{make_input_tm_facs}
-\title{Title}
+\title{make_input_tm_facs}
 \usage{
 make_input_tm_facs(data_list, gene_usage = FALSE, Train = TRUE,
   ncore = 1)
 }
 \arguments{
-\item{data_list}{result of import_tm_facs}
+\item{data_list}{result of import_tm_facs or import_sparse}
+
+\item{gene_usage}{option for gene/peak_location filtering to make hadamard matrix
+\itemize{
+\item FALSE: gene/peak_location filtering by discarding low expressing cell ratio genes/peak_locations
+\item certain number (ex: 2048): the number of gene to use for training (must be suitable number to generate hadamard matrix)
+}}
+
+\item{Train}{TRUE if it is data for training
+\itemize{
+\item TRUE: adjust min_thr and max_thr. In addition, make the gene/peak_location count for hadamard matrix
+\item FALSE: no gene/peak_location filtering
+}}
+
+\item{ncore}{multi-thread}
 }
 \value{
-
+list of "make_input" results from each tissue (or sample)
 }
 \description{
 "make_input" for result of import_tm_facs
 }
 \examples{
+tm_facs <- import_tm_facs("address")
+tm_facs_input <- make_input_tm_facs(tm_facs)
 
 }

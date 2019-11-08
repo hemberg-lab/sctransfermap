@@ -2,7 +2,7 @@
 % Please edit documentation in R/test_code.R
 \name{leave_one_val}
 \alias{leave_one_val}
-\title{Title}
+\title{leave_one_val}
 \usage{
 leave_one_val(att_set, sig_set)
 }
@@ -12,18 +12,21 @@ leave_one_val(att_set, sig_set)
 \item{sig_set}{signature set}
 }
 \value{
-res_list, ratio_list, val_list, tissue_list, f1_list, unassign_list
-res[[1]]: res_list (confusion matrix)
-res[[2]]: ratio_list (confusion_ratio_matrix)
-res[[3]]: val_list (validation matrix)
-res[[4]]: tissue_list
-res[[5]]: f1_list (f1 score)
-res[[6]]: unassign_list
-each result is composed of sample in TM (ex: res[[1]][1]: confusion matrix of Aorta tissue)
+6 results: conf_list, conf_ratio_list, val_list, tissue_list, f1_list, unassign_list
+\itemize{
+\item conf_list: confusion matrix
+\item conf_ratio_list: ratio_list (confusion_ratio_matrix)
+\item val_list: validation matrix
+\item tissue_list
+\item f1_list: f1 score
+\item unassign_list
+}
+- each result is composed of sample in TM (ex: res$conf_list[1]: confusion matrix of Aorta tissue)
 }
 \description{
 leave one tissue validation of TM (the parameter for side-information of att_set and sig_set must be same)
 }
 \examples{
+res <- leave_one_val(att_set, sig_set)
 
 }

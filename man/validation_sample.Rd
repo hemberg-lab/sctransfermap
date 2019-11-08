@@ -2,19 +2,25 @@
 % Please edit documentation in R/test_code.R
 \name{validation_sample}
 \alias{validation_sample}
-\title{Title}
+\title{validation_sample}
 \usage{
 validation_sample(conf)
 }
 \arguments{
-\item{description}{of parameters}
+\item{conf}{confusion matrix from predict_cell}
 }
 \value{
-
+f1_score, unassign
+\itemize{
+\item f1_score: list of F1 scores for each sample
+\item unassign: list of unassign ratio for each sample
+}
 }
 \description{
-Description
+calculate F1 scores and unassign ratio
 }
 \examples{
+conf <- predict_cell(att_set, query_signature)
+res <- validation_sample(conf)
 
 }

@@ -2,10 +2,10 @@
 % Please edit documentation in R/test_code.R
 \name{make_tm_facs_attribute_set}
 \alias{make_tm_facs_attribute_set}
-\title{Title}
+\title{make_tm_facs_attribute_set}
 \usage{
-make_tm_facs_attribute_set(tm_facs_input, s, annot, mincell, ngene = 64,
-  fdrthr = 0.1, lambda = 1, gamma = 1)
+make_tm_facs_attribute_set(tm_facs_input, s, annot, mincell, data_name,
+  sdatatype, ngene = 64, fdrthr = 0.1, lambda = 1, gamma = 1)
 }
 \arguments{
 \item{tm_facs_input}{the result of make_input_tm_facs}
@@ -15,6 +15,18 @@ make_tm_facs_attribute_set(tm_facs_input, s, annot, mincell, ngene = 64,
 \item{annot}{cell ontology (julia object)}
 
 \item{mincell}{TRUE if user wants to give minimum cell type thresholding}
+
+\item{data_name}{name for the attribute}
+
+\item{sdatatype}{type of side-information (cell_ontology, ATAC-seq, or user-defined term)}
+
+\item{ngene}{a number of vector size after JL transformation}
+
+\item{fdrthr}{fdr threshold for calculating similarity score during training}
+
+\item{lambda}{parameter for ZSL}
+
+\item{gamma}{paramter for ZSL}
 }
 \value{
 attribute set
@@ -23,5 +35,11 @@ attribute set
 creating attribute set from the result of make_input_tm_facs
 }
 \examples{
+tm_facs_input <- make_input_tm_facs(tm_facs)
+w2v <- make_w2v("Pubmed.index")
+cell_ontology <- make_cellontology("cell_ontogloy_file")
+stopword <- make_stopwords(stopwords)
+side_info <- make_w2v_sideinfo(w2v, cell_ontology, stopword)
+sig_set <- make_tm_facs_attribute_set(tm_facs_input, side_info, cell_ontology, FALSE, "user", "cell_ontology")
 
 }

@@ -2,20 +2,39 @@
 % Please edit documentation in R/test_code.R
 \name{tm_facs_logistic}
 \alias{tm_facs_logistic}
-\title{Title}
+\title{tm_facs_logistic}
 \usage{
 tm_facs_logistic(att_set, meta_model, sig_set, Tissue_opt = FALSE,
   celltype_specific = FALSE)
 }
 \arguments{
-\item{description}{of parameters}
+\item{att_set}{attribute set}
+
+\item{meta_model}{logistic regression model from create_meta_index_av}
+
+\item{sig_set}{signature set}
+
+\item{Tissue_opt}{TRUE if user wants to find tissue-origin}
+
+\item{celltype_specific}{TRUE if user wants to calculate the weight fo each tissue with only matched cell type. Otherwise, weight for each tissue will be calculated with whole celltypes (deault: FALSE; tissue_opt should be TRUE to use this parameter)}
 }
 \value{
-
+6 results: conf_list, conf_ratio_list, val_list, tissue_list, f1_list, unassign_list
+\itemize{
+\item conf_list: confusion matrix
+\item conf_ratio_list: ratio_list (confusion_ratio_matrix)
+\item val_list: validation matrix
+\item tissue_list
+\item f1_list: f1 score
+\item unassign_list
+}
+- each result is composed of sample in TM (ex: res$conf_list[1]: confusion matrix of Aorta tissue)
 }
 \description{
-Description
+prediction by logistic regression for multiple data
 }
 \examples{
+meta_model <- create_meta_index_av(att_set1, sig_set1)
+res <- tm_facs_logistic(att_set1, meta_model, sig_set2)
 
 }

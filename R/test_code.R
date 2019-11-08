@@ -8,15 +8,17 @@
 
 #object.size(variable_name)
 
-#' Title
+#' import_tm_facs
 #'
-#' "importdata" for TM
+#' "importdata" for TM (or multiple "raw" matrix files)
 #'
-#' @param address scdata address list
+#' @param address scdata address list (format: "raw")\cr
+#' - filename: tissue_1_cnt, tissue_2_cnt ...
 #'
-#' @return 
+#' @return list of matrix (names: each tissue or filename)
 #'
 #' @examples
+#' tm_facs <- import_tm_facs("address_file")
 #'
 #' @export
 import_tm_facs <- function(address){
@@ -38,34 +40,109 @@ import_tm_facs <- function(address){
 	print(proc_time)
 	return (data_list)
 }
-#brainmyeloid, brainnonmyeloid -> brain
 
+#' import_sparse
+#'
+#' "importdata" for TM (or multiple "sparse" matrix files)
+#'
+#' @param address scdata address list (contains only the prefix of the file: Heart, Lung ...)
+#' @param suffix_file suffix for rowname_file, cellname_file, and sparse matrix
+#' \itemize{
+#' \item format of the suffix_file (should be same order as shown below)
+#' \item _cells.tsv
+#' \item _row.tsv
+#' \item _count.mtx
+#' }
+#' @param row_opt indicates the column number that sholud be used for the gene(peak) name
+#'
+#' @return list of matrix (names: each tissue or filename)
+#'
+#' @examples
+#' tm_sparse <- import_sparse("address_file", "suffix_file")
+#'
+#' @export
+import_sparse <- function(address, suffix_file, row_opt = 1){
+	start_time <- Sys.time()
+	suffix_list <- readLines(suffix_file)
+	address_list <- readLines(address)
+	data_list <- list()
+	for (i in 1:length(address_list)){
+		address_tissue <- address_list[i]
+		tmp_cell <- paste(address_tissue, suffix_list[1], sep = "")
+		tmp_row <- paste(address_tissue, suffix_list[2], sep = "")
+		tmp_mat <- paste(address_tissue, suffix_list[3], sep = "")
+		import_tissue <- importdata(tmp_mat, opt = "sparse", colname_file = tmp_cell, rowname_file = tmp_row, row_opt = row_opt)
+		tmp <- strsplit(address_tissue, "/")
+		tissue_name <- tmp[[1]][length(tmp[[1]])]
+		print(tissue_name)
+		data_list[[i]] <- import_tissue
+		names(data_list)[[i]] <- tissue_name
+	}
+	end_time <- Sys.time()
+	proc_time <- end_time - start_time
+	print(proc_time)
+	return(data_list)
+}
 
-# gene_usage: 2048 or total
-#' Title
+#' sparse_tm_facs
+#'
+#' "save_sparse_data" for multiple "raw" matrix object 
+#'
+#' @param tm_facs list variable of importdata (same as import_tm_facs or import_sparse or list of importdata)
+#'
+#' @return save files in sparse format (see save_sparse_data)
+#'
+#' @examples
+#' tm_facs <- import_tm_facs("address_file")
+#' sparse_tm_facs(tm_facs)
+#'
+#' @export
+sparse_tm_facs <- function(tm_facs){
+	start_time <- Sys.time()
+	for (i in 1:length(tm_facs)){
+		tissue_name <- names(tm_facs)[i]
+		print(tissue_name)
+		save_sparse_data(tm_facs[[i]], tissue_name)
+	}
+	end_time <- Sys.time()
+	proc_time <- end_time - start_time
+	print(proc_time)	
+
+}
+
+#' make_input_tm_facs
 #'
 #' "make_input" for result of import_tm_facs
 #'
-#' @param data_list result of import_tm_facs
+#' @param data_list result of import_tm_facs or import_sparse
+#' @param gene_usage option for gene/peak_location filtering to make hadamard matrix
+#' \itemize{
+#' \item FALSE: gene/peak_location filtering by discarding low expressing cell ratio genes/peak_locations
+#' \item certain number (ex: 2048): the number of gene to use for training (must be suitable number to generate hadamard matrix)
+#' }
+#' @param Train TRUE if it is data for training
+#' \itemize{
+#' \item TRUE: adjust min_thr and max_thr. In addition, make the gene/peak_location count for hadamard matrix
+#' \item FALSE: no gene/peak_location filtering
+#' }
+#' @param ncore multi-thread
 #'
-#' @return 
+#' @return list of "make_input" results from each tissue (or sample)
 #'
 #' @examples
+#' tm_facs <- import_tm_facs("address")
+#' tm_facs_input <- make_input_tm_facs(tm_facs)
 #'
 #' @export
 make_input_tm_facs <- function(data_list, gene_usage = FALSE, Train = TRUE, ncore = 1){
 	registerDoParallel(ncore)
 	start_time <- Sys.time()
 	tissue_name <- names(data_list)
-#	tm_facs_input <- list()
-#	for (i in 1:length(data_list)){
 	tm_facs_input <- foreach (i = 1:length(data_list)) %dopar% {
 		tissue_name <- names(data_list)[i]
 		print(tissue_name)
 		data <- data_list[[i]]
 		d <- make_input(data, train = Train, gene_usage = gene_usage)
-#		tm_facs_input[[i]] <- d
-#		names(tm_facs_input)[[i]] <- tissue_name
 	}
 
 	names(tm_facs_input) <- tissue_name
@@ -77,34 +154,64 @@ make_input_tm_facs <- function(data_list, gene_usage = FALSE, Train = TRUE, ncor
 
 }
 
-#' Title
+#' tissue_merge
+#'
+#' merge same tissue type from tissue name (internal function for where tissue name should be merged)
+#'
+#' @param tissue input tissue name divided by "_"
+#' \itemize{
+#' \item tissue_name: Heart_1, Heart_2, Lung_1, Lung_2 ...
+#' \item BrainNonMyeloid: Brain
+#' \item BrainMyeloid: Brain
+#' }
+#'
+#' @return collapsed tissue name
+#'
+#' @examples
+#' new_tissue <- tissue_merge("Heart_1")
+#'
+#' @export
+tissue_merge <- function(tissue){
+	if (tissue == "BrainNonMyeloid"){
+		tissue <- "Brain"
+	}
+	else if (tissue == "BrainMyeloid"){
+		tissue <- "Brain"
+	}
+	tissue <- strsplit(tissue, "_")[[1]][1]
+	return (tissue)
+}
+
+
+#' make_tm_facs_signature_set
 #'
 #' creating signature set from result of make_input_tm_facs
 #'
 #' @param tm_facs_input result of make_input_tm_facs
 #' @param s side-infomration (julia object)
 #' @param annot cell_ontology (julia object)
-#'
+#' @param data_name name for the signature
+#' @param sdatatype type of side-information (cell_ontology, ATAC-seq, or user-defined term)
 #' @return signature set
 #'
 #' @examples
+#' tm_facs_input <- make_input_tm_facs(tm_facs)
+#' w2v <- make_w2v("Pubmed.index")
+#' cell_ontology <- make_cellontology("cell_ontogloy_file")
+#' stopword <- make_stopwords(stopwords)
+#' side_info <- make_w2v_sideinfo(w2v, cell_ontology, stopword)
+#' sig_set <- make_tm_facs_signature_set(tm_facs_input, side_info, cell_ontology, "user", "cell_ontology")
 #'
 #' @export
-make_tm_facs_signature_set <- function(tm_facs_input, s, annot){
+make_tm_facs_signature_set <- function(tm_facs_input, s, annot, data_name, sdatatype){
 	start_time <- Sys.time()
 	head = TRUE
 	for(i in 1:length(tm_facs_input)){
 		tissue_name <- names(tm_facs_input)[i]
 		print(tissue_name)
-		if (tissue_name == "BrainNonMyeloid"){
-			tissue_name <- "Brain"
-		}
-		else if (tissue_name == "BrainMyeloid"){
-			tissue_name <- "Brain"
-		}
-		
+		tissue_name <- tissue_merge(tissue_name)		
 		d <- tm_facs_input[[i]]
-		d_sig <- create_signature("Tabula_Muris_Facs", tissue_name, s, d[[1]], d[[2]], d[[3]], annot, "cellontology", Stopwords = JuliaObject(""))
+		d_sig <- create_signature(data_name, tissue_name, s, d[[1]], d[[2]], d[[3]], annot, sdatatype, Stopwords = JuliaObject(""))
 		if (head){
 			tm_facs_signature_set <- make_signature_set(d_sig)
 			head = FALSE
@@ -119,8 +226,7 @@ make_tm_facs_signature_set <- function(tm_facs_input, s, annot){
 
 }
 
-#mincell: TRUE -> do minimum cell thresholding
-#' Title
+#' make_tm_facs_attribute_set
 #'
 #' creating attribute set from the result of make_input_tm_facs
 #'
@@ -128,31 +234,38 @@ make_tm_facs_signature_set <- function(tm_facs_input, s, annot){
 #' @param s side-information (jula object)
 #' @param annot cell ontology (julia object)
 #' @param mincell TRUE if user wants to give minimum cell type thresholding
+#' @param data_name name for the attribute
+#' @param sdatatype type of side-information (cell_ontology, ATAC-seq, or user-defined term)
+#' @param ngene a number of vector size after JL transformation
+#' @param fdrthr fdr threshold for calculating similarity score during training
+#' @param gamma paramter for ZSL
+#' @param lambda parameter for ZSL
 #'
 #' @return attribute set
 #'
 #' @examples
+#' tm_facs_input <- make_input_tm_facs(tm_facs)
+#' w2v <- make_w2v("Pubmed.index")
+#' cell_ontology <- make_cellontology("cell_ontogloy_file")
+#' stopword <- make_stopwords(stopwords)
+#' side_info <- make_w2v_sideinfo(w2v, cell_ontology, stopword)
+#' sig_set <- make_tm_facs_attribute_set(tm_facs_input, side_info, cell_ontology, FALSE, "user", "cell_ontology")
 #'
 #' @export
-make_tm_facs_attribute_set <- function(tm_facs_input, s, annot, mincell, ngene = 64, fdrthr = 0.1, lambda = 1, gamma = 1){
+make_tm_facs_attribute_set <- function(tm_facs_input, s, annot, mincell, data_name, sdatatype, ngene = 64, fdrthr = 0.1, lambda = 1, gamma = 1){
 	start_time <- Sys.time()
 	head = TRUE
 	for (i in 1:length(tm_facs_input)){
 		tissue_name <- names(tm_facs_input)[i]
 		print(tissue_name)
-		if (tissue_name == "BrainNonMyeloid"){
-			tissue_name <- "Brain"
-		}
-		else if (tissue_name == "BrainMyeloid"){
-			tissue_name <- "Brain"
-		}
+		tissue_name <- tissue_merge(tissue_name)
 		d <- tm_facs_input[[i]]
 		
 		if (mincell){
-			d_att <- create_attribute("Tabula_Muris_Facs", tissue_name, s, d[[1]], d[[2]], d[[3]], annot, "cellontology", Stopwords = JuliaObject(""), Ngene = ngene, Fdrthr = fdrthr,Gamma = gamma, Lambda = lambda)		
+			d_att <- create_attribute(data_name, tissue_name, s, d[[1]], d[[2]], d[[3]], annot, sdatatype, Stopwords = JuliaObject(""), Ngene = ngene, Fdrthr = fdrthr,Gamma = gamma, Lambda = lambda)		
 		}
 		else {
-			d_att <- create_attribute("Tabula_Muris_Facs", tissue_name, s, d[[1]], d[[2]], d[[3]], annot, "cellontology", Stopwords = JuliaObject(""), Mincellcount = 0, Mincellfrac = 0, Ngene = ngene, Fdrthr = fdrthr,Gamma = gamma, Lambda = lambda)	
+			d_att <- create_attribute(data_name, tissue_name, s, d[[1]], d[[2]], d[[3]], annot, sdatatype, Stopwords = JuliaObject(""), Mincellcount = 0, Mincellfrac = 0, Ngene = ngene, Fdrthr = fdrthr,Gamma = gamma, Lambda = lambda)	
 		}
 		if (head){
 			tm_facs_att_set <- make_attribute_set(d_att)
@@ -167,22 +280,26 @@ make_tm_facs_attribute_set <- function(tm_facs_input, s, annot, mincell, ngene =
 	return (tm_facs_att_set)
 }
 
-#' Title
+#' leave_one_val
 #'
 #' leave one tissue validation of TM (the parameter for side-information of att_set and sig_set must be same)
 #'
 #' @param att_set attribute set
 #' @param sig_set signature set
 #'
-#' @return res_list, ratio_list, val_list, tissue_list, f1_list, unassign_list
-#' res[[1]]: res_list (confusion matrix)
-#' res[[2]]: ratio_list (confusion_ratio_matrix)
-#' res[[3]]: val_list (validation matrix)
-#' res[[4]]: tissue_list
-#' res[[5]]: f1_list (f1 score)
-#' res[[6]]: unassign_list
-#' each result is composed of sample in TM (ex: res[[1]][1]: confusion matrix of Aorta tissue)
+#' @return 6 results: conf_list, conf_ratio_list, val_list, tissue_list, f1_list, unassign_list
+#' \itemize{
+#' \item conf_list: confusion matrix
+#' \item conf_ratio_list: ratio_list (confusion_ratio_matrix)
+#' \item val_list: validation matrix
+#' \item tissue_list
+#' \item f1_list: f1 score
+#' \item unassign_list
+#' }
+#' - each result is composed of sample in TM (ex: res$conf_list[1]: confusion matrix of Aorta tissue)
+#'
 #' @examples
+#' res <- leave_one_val(att_set, sig_set)
 #'
 #' @export
 leave_one_val <-function(att_set, sig_set){
@@ -223,18 +340,26 @@ leave_one_val <-function(att_set, sig_set){
 	end_time <- Sys.time()
 	proc_time <- end_time - start_time
 	print(proc_time)
-	return (list(res_list, ratio_list, val_list, tissue_list, f1_list, unassign_list))
+	total_res_list <- list(res_list, ratio_list, val_list, tissue_list, f1_list, unassign_list)
+	names(total_res_list) <- c("conf_list", "conf_ratio_list", "val_list", "tissue_list", "f1_list", "unassign_list")
+	return (total_res_list)
 }
 
-#' Title
+#' validation_sample
 #'
-#' Description
+#' calculate F1 scores and unassign ratio
 #'
-#' @param description of parameters
+#' @param conf confusion matrix from predict_cell
 #'
-#' @return 
+#' @return f1_score, unassign
+#' \itemize{
+#' \item f1_score: list of F1 scores for each sample
+#' \item unassign: list of unassign ratio for each sample
+#' }
 #'
 #' @examples
+#' conf <- predict_cell(att_set, query_signature)
+#' res <- validation_sample(conf)
 #'
 #' @export
 validation_sample <- function(conf){
@@ -256,22 +381,38 @@ validation_sample <- function(conf){
 
 	tmp_unassign <- colSums(validation(conf))[2]
 	unassign <- tmp_unassign / total_true
-
+	
+	res_list <- list(f1_score, unassign)
+	names(res_list) <- c("f1_score", "unassign")	
 	return (list(f1_score, unassign))
 
 }
 
 
-#modeling logistic regression is enough from CoreMethod.R
-#' Title
+#' tm_facs_logistic
 #'
-#' Description
+#' prediction by logistic regression for multiple data
 #'
-#' @param description of parameters
+#' @param att_set attribute set
+#' @param meta_model logistic regression model from create_meta_index_av
+#' @param sig_set signature set
+#' @param Tissue_opt TRUE if user wants to find tissue-origin
+#' @param celltype_specific TRUE if user wants to calculate the weight fo each tissue with only matched cell type. Otherwise, weight for each tissue will be calculated with whole celltypes (deault: FALSE; tissue_opt should be TRUE to use this parameter)
 #'
-#' @return 
+#' @return 6 results: conf_list, conf_ratio_list, val_list, tissue_list, f1_list, unassign_list
+#' \itemize{
+#' \item conf_list: confusion matrix
+#' \item conf_ratio_list: ratio_list (confusion_ratio_matrix)
+#' \item val_list: validation matrix
+#' \item tissue_list
+#' \item f1_list: f1 score
+#' \item unassign_list
+#' }
+#' - each result is composed of sample in TM (ex: res$conf_list[1]: confusion matrix of Aorta tissue)
 #'
 #' @examples
+#' meta_model <- create_meta_index_av(att_set1, sig_set1)
+#' res <- tm_facs_logistic(att_set1, meta_model, sig_set2)
 #'
 #' @export
 tm_facs_logistic <- function(att_set, meta_model, sig_set, Tissue_opt = FALSE, celltype_specific = FALSE){
@@ -312,9 +453,9 @@ tm_facs_logistic <- function(att_set, meta_model, sig_set, Tissue_opt = FALSE, c
 	end_time <- Sys.time()
 	proc_time <- end_time - start_time
 	print(proc_time)
-	return (list(res_list, ratio_list, val_list, tissue_list, f1_list, unassign_list))
-
-
+	total_res_list <- list(res_list, ratio_list, val_list, tissue_list, f1_list, unassign_list)
+    names(total_res_list) <- c("conf_list", "conf_ratio_list", "val_list", "tissue_list", "f1_list", "unassign_list")
+    return (total_res_list)
 }
 
 #tm_facs: result of data_list from import_tm_facs
@@ -326,15 +467,24 @@ tm_facs_logistic <- function(att_set, meta_model, sig_set, Tissue_opt = FALSE, c
 #'
 #' @param tm_facs result of import_tm_facs
 #'
-#' @return tm_att_result, tm_meta_result, tm_logistic_result
-#' res[[1]]: tm_att_result -> attribute_set
-#' res[[2]]: tm_meta_result -> result of logistic regression (same as create_meta_index)
-#' res[[3]]: tm_logistic_result -> result of logistic regression prediction (same a leave_one_val)
-#' all the result should decide n-fold index (ex: res[[1]][[1]]: tm_att_result, res[[2]][[5]]: tm_meta_result)
-#' @examples
+#' @return att_set, meta_set, logistic_result
+#' \itemize{
+#' \item att_set: attribute_set
+#' \item meta_set: result of logistic regression (same as create_meta_index_av)
+#' \item logistic_result: result of logistic regression prediction (same a leave_one_val)
+#' \item n_fold: all the results needs n-fold index (ex: res$att_set$1_fold: att_set)
+#' }
 #'
+#' @examples
+#' tm_facs <- input_tm_facs("address")
+#' w2v <- make_w2v("Pubmed.index")
+#' cell_ontology <- make_cellontology("cell_ontogloy_file")
+#' stopword <- make_stopwords(stopwords)
+#' side_info <- make_w2v_sideinfo(w2v, cell_ontology, stopword)
+#' res <- n_fold_logistic(tm_facs, 2048, side_info, cell_ontology, FALSE, 64, "user", "cell_ontology")
+#' 
 #' @export
-n_fold_logsitic <- function(tm_facs, Gene_usage, s, annot, mincell, Ngene, fdrthr = 0.1, n = 5, k = 1, tissue_opt = FALSE, Celltype_specific = FALSE, ncore = 1){
+n_fold_logistic <- function(tm_facs, Gene_usage, s, annot, mincell, Ngene, data_name, sdatatype, fdrthr = 0.1, n = 5, k = 1, tissue_opt = FALSE, Celltype_specific = FALSE, ncore = 1){
 	tm_att_result<- list()
 	tm_meta_result <- list()
 	tm_logistic_result <- list()
@@ -408,24 +558,29 @@ n_fold_logsitic <- function(tm_facs, Gene_usage, s, annot, mincell, Ngene, fdrth
 								
 		}
 		cat("\n\nSignature for GLM\n")
-		tm_sig_glm_set <- make_tm_facs_signature_set(glm_list, s, annot)
+		tm_sig_glm_set <- make_tm_facs_signature_set(glm_list, s, annot, data_name, sdatatype)
 		cat("\nSignature for Valdiation")
-		tm_sig_val_set <- make_tm_facs_signature_set(val_list, s, annot)
-		tm_att_set <- make_tm_facs_attribute_set(zsl_list, s, annot, mincell, ngene = Ngene, fdrthr = fdrthr)
+		tm_sig_val_set <- make_tm_facs_signature_set(val_list, s, annot, data_name, sdatatype)
+		tm_att_set <- make_tm_facs_attribute_set(zsl_list, s, annot, mincell, data_name, sdatatype, ngene = Ngene, fdrthr = fdrthr)
 
 		meta <- create_meta_index_av(tm_att_set, tm_sig_glm_set, ncore = ncore)
 		logistic_res <- tm_facs_logistic(tm_att_set, meta, tm_sig_val_set, Tissue_opt = tissue_opt, celltype_specific = Celltype_specific)
 		
 		tm_att_result[[n_index]] <- tm_att_set
+		names(tm_att_result)[n_index] <- paste(n_index, "fold", sep = "_")
 		tm_meta_result[[n_index]] <- meta
+		names(tm_meta_result)[n_index] <- paste(n_index, "fold", sep = "_")
 		tm_logistic_result[[n_index]] <- logistic_res
-		
+		names(tm_logistic_result)[n_index] <- paste(n_index, "fold", sep = "_")
 
 		end_time <- Sys.time()
 		proc_time <- end_time - start_time
 		print(proc_time)
 	}
-	return (list(tm_att_result, tm_meta_result, tm_logistic_result))
+	
+	total_res_list <- list(tm_att_result, tm_meta_result, tm_logistic_result)
+	names(total_res_list) <- c("att_set", "meta_set", "logistic_result")	
+	return (total_res_list)
 }
 
 
